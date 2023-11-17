@@ -11,12 +11,15 @@ public class BrailleASCIITables {
             brailleToAsciiTree = buildBitTree("brailleToASCII.txt", 6);
             System.out.println("Initializing brailleToUnicodeTree...");
             brailleToUnicodeTree = buildBitTree("brailleToUnicode.txt", 6);
+            System.out.println("Initializing asciiToBrailleTree..."); // Add this line
+            asciiToBrailleTree = buildBitTree("ASCIIToBraille.txt", 6); // Add this line
             System.out.println("Initialization successful!");
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error initializing trees: " + e.getMessage());
         }
-    }    
+    }
+    
 
     public static String toASCII(String bits) throws Exception {
         try {
@@ -52,7 +55,13 @@ public class BrailleASCIITables {
 
     public static String toBraille(char letter) throws Exception {
         try {
-            return asciiToBrailleTree.get(String.valueOf(letter));
+            int asciiValue = (int) letter;
+            String binaryRepresentation = Integer.toBinaryString(asciiValue);
+            // Pad with leading zeros if needed to match the expected bit length
+            while (binaryRepresentation.length() < 6) {
+                binaryRepresentation = "0" + binaryRepresentation;
+            }
+            return asciiToBrailleTree.get(binaryRepresentation);
         } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
             return "";
@@ -70,9 +79,9 @@ public class BrailleASCIITables {
                     String brailleBits = parts[0];
                     String value = parts[1];
                     try {
-                        tree.set(value, brailleBits);
+                        tree.set(brailleBits, value); // Adjust the order
                     } catch (Exception e) {
-                        System.err.println("Error setting value for bits " + value + ": " + e.getMessage());
+                        System.err.println("Error setting value for bits " + brailleBits + ": " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
