@@ -15,7 +15,7 @@ public class BrailleASCII {
                     result = toBraille(sourceText);
                     break;
                 case "ascii":
-                    result = toASCII(sourceText);
+                    result = toBrailleASCII(sourceText);
                     break;
                 case "unicode":
                     result = toUnicode(sourceText);
@@ -40,7 +40,7 @@ public class BrailleASCII {
         return brailleBuilder.toString();
     }
 
-    private static String toASCII(String sourceText) throws Exception {
+    private static String toBrailleASCII(String sourceText) throws Exception {
         StringBuilder asciiBuilder = new StringBuilder();
         for (char c : sourceText.toCharArray()) {
             String binaryRepresentation = BrailleASCIITables.toBraille(c);
@@ -54,9 +54,9 @@ public class BrailleASCII {
         StringBuilder unicodeBuilder = new StringBuilder();
         for (char c : sourceText.toCharArray()) {
             String binaryRepresentation = BrailleASCIITables.toBraille(c);
-            char unicodeChar = BrailleASCIITables.toUnicode(binaryRepresentation);
+            String unicodeChar = String.valueOf(BrailleASCIITables.toUnicode(binaryRepresentation));
             unicodeBuilder.append(unicodeChar);
         }
         return unicodeBuilder.toString();
-    }
+    }    
 }
