@@ -4,8 +4,10 @@ class BitTreeNode {
     String val;
     BitTreeNode left;
     BitTreeNode right;
+    int bitLength; // Add this line to store the bit length.
 
-    BitTreeNode() {
+    BitTreeNode(int bitLength) {
+        this.bitLength = bitLength;
         this.val = "";
         this.left = null;
         this.right = null;
@@ -13,7 +15,8 @@ class BitTreeNode {
 }
 
 class BitTreeLeaf extends BitTreeNode {
-    BitTreeLeaf(String val) {
+    BitTreeLeaf(String val, int bitLength) {
+        super(bitLength);
         this.val = val;
         this.left = null;
         this.right = null;
@@ -29,56 +32,55 @@ public class BitTree {
             throw new IllegalArgumentException("Bit length must be >= 1");
         }
         this.bitLength = n;
-        this.root = new BitTreeNode(); // Initialize an empty root node.
+        this.root = new BitTreeNode(n); // Initialize an empty root node with the specified bit length.
     }
 
     public void set(String bits, String value) throws Exception {
         if (bits.length() != bitLength || !isValidBitString(bits)) {
             throw new Exception("Invalid bits length or format");
         }
-    
+
         BitTreeNode curr = root;
-        for (int i = 0; i < bits.length() - 1; i++) { // Adjust loop length
+        for (int i = 0; i < bits.length() - 1; i++) {
             if (bits.charAt(i) == '0') {
                 if (curr.left == null) {
-                    curr.left = new BitTreeNode();
+                    curr.left = new BitTreeNode(bitLength);
                 }
                 curr = curr.left;
             } else if (bits.charAt(i) == '1') {
                 if (curr.right == null) {
-                    curr.right = new BitTreeNode();
+                    curr.right = new BitTreeNode(bitLength);
                 }
                 curr = curr.right;
             }
         }
         if (bits.charAt(bits.length() - 1) == '0') {
-            curr.left = new BitTreeLeaf(value);  // Create leaf for the last bit
+            curr.left = new BitTreeLeaf(value, bitLength);
         } else {
-            curr.right = new BitTreeLeaf(value); // Create leaf for the last bit
+            curr.right = new BitTreeLeaf(value, bitLength);
         }
-    }    
+    }
 
     public String get(String bits) throws Exception {
-        if (bits == null || bits.length() != bitLength || !isValidBitString(bits)) {
-            throw new Exception("Invalid path length or format");
-        }
-
         BitTreeNode curr = root;
         for (int i = 0; i < bits.length(); i++) {
+            //System.out.println("Traversing bit: " + bits.charAt(i));
             if (bits.charAt(i) == '0') {
                 if (curr.left == null) {
+                    System.out.println("Invalid path: No left child");
                     throw new Exception("Invalid path");
                 }
                 curr = curr.left;
             } else if (bits.charAt(i) == '1') {
                 if (curr.right == null) {
+                    System.out.println("Invalid path: No right child");
                     throw new Exception("Invalid path");
                 }
                 curr = curr.right;
             }
         }
         return (curr instanceof BitTreeLeaf) ? ((BitTreeLeaf) curr).val : null;
-    }
+    }    
 
     public void dump(PrintWriter pen) {
         dumpHelper(root, "", pen);
