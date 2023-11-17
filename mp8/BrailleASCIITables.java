@@ -1,169 +1,121 @@
 import java.io.*;
 
-class BitTreeNode {
-    String val;
-    BitTreeNode left;
-    BitTreeNode right;
-    int bitLength; // Add this line to store the bit length.
+public class BrailleASCIITables {
+    private static BitTree asciiToBrailleTree;
+    private static BitTree brailleToAsciiTree;
+    private static BitTree brailleToUnicodeTree;
 
-    BitTreeNode(int bitLength) {
-        this.bitLength = bitLength;
-        this.val = "";
-        this.left = null;
-        this.right = null;
-    }
-}
-
-class BitTreeLeaf extends BitTreeNode {
-    BitTreeLeaf(String val, int bitLength) {
-        super(bitLength);
-        this.val = val;
-        this.left = null;
-        this.right = null;
-    }
-}
-
-public class BitTree {
-    private BitTreeNode root;
-    private int bitLength;
-
-    public BitTree(int n) {
-        if (n < 1) {
-            throw new IllegalArgumentException("Bit length must be >= 1");
+    static {
+        try {
+            System.out.println("Initializing brailleToAsciiTree...");
+            brailleToAsciiTree = buildBitTree("brailleToASCII.txt", 6);
+            System.out.println("Initializing brailleToUnicodeTree...");
+            brailleToUnicodeTree = buildBitTree("brailleToUnicode.txt", 6);
+            System.out.println("Initializing asciiToBrailleTree..."); // Add this line
+            asciiToBrailleTree = buildBitTree("ASCIIToBraille.txt", 8); // Add this line
+            System.out.println("Initialization successful!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error initializing trees: " + e.getMessage());
         }
-        this.bitLength = n;
-        this.root = new BitTreeNode(n); // Initialize an empty root node with the specified bit length.
     }
+    
 
-    public void set(String bits, String value) throws Exception {
-        if (bits.length() != bitLength || !isValidBitString(bits)) {
-            throw new Exception("Invalid bits length or format");
-        }
+    public static String toASCII(String bits) throws Exception {
+        try {
+            int expectedBitLength = 6; // Adjust this value based on your actual bit length
 
-        BitTreeNode curr = root;
-        for (int i = 0; i < bits.length() - 1; i++) {
-            if (bits.charAt(i) == '0') {
-                if (curr.left == null) {
-                    curr.left = new BitTreeNode(bitLength);
-                }
-                curr = curr.left;
-            } else if (bits.charAt(i) == '1') {
-                if (curr.right == null) {
-                    curr.right = new BitTreeNode(bitLength);
-                }
-                curr = curr.right;
+            if (bits.length() != expectedBitLength || !isValidBitString(bits)) {
+                throw new IllegalArgumentException("Invalid braille bits");
             }
-        }
-        if (bits.charAt(bits.length() - 1) == '0') {
-            curr.left = new BitTreeLeaf(value, bitLength);
-        } else {
-            curr.right = new BitTreeLeaf(value, bitLength);
+
+            System.out.println("Braille bits: " + bits);
+            return brailleToAsciiTree.get(bits);
+        } catch (IOException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return "";
         }
     }
 
-    public String get(String bits) throws Exception {
-        BitTreeNode curr = root;
-        for (int i = 0; i < bits.length(); i++) {
-            //System.out.println("Traversing bit: " + bits.charAt(i));
-            if (bits.charAt(i) == '0') {
-                if (curr.left == null) {
-                    System.out.println("Invalid path: No left child");
-                    throw new Exception("Invalid path");
-                }
-                curr = curr.left;
-            } else if (bits.charAt(i) == '1') {
-                if (curr.right == null) {
-                    System.out.println("Invalid path: No right child");
-                    throw new Exception("Invalid path");
-                }
-                curr = curr.right;
+
+    public static char toUnicode(String bits) throws Exception {
+        try {
+            String unicodeValue = brailleToUnicodeTree.get(bits);
+            if (unicodeValue != null && !unicodeValue.isEmpty()) {
+                return (char) Integer.parseInt(unicodeValue, 16);
+            } else {
+                throw new IllegalArgumentException("Invalid braille bits");
             }
+        } catch (IOException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return '\0';
         }
-        return (curr instanceof BitTreeLeaf) ? ((BitTreeLeaf) curr).val : null;
-    }    
-
-    public void dump(PrintWriter pen) {
-        dumpHelper(root, "", pen);
     }
 
-    private void dumpHelper(BitTreeNode node, String path, PrintWriter pen) {
-        if (node != null) {
-            if (node instanceof BitTreeLeaf) {
-                pen.println(path + "," + ((BitTreeLeaf) node).val);
+    public static String toBraille(char letter) throws Exception {
+        try {
+            int asciiValue = (int) letter;
+            String binaryRepresentation = Integer.toBinaryString(asciiValue);
+    
+            // Pad with leading zeros if needed to match the expected bit length (8 in this case)
+            while (binaryRepresentation.length() < 8) {
+                binaryRepresentation = "0" + binaryRepresentation;
             }
-            dumpHelper(node.left, path + "0", pen);
-            dumpHelper(node.right, path + "1", pen);
+    
+            // Ensure the binary representation is exactly 8 characters long
+            if (binaryRepresentation.length() != 8) {
+                throw new IllegalArgumentException("Invalid binary representation length");
+            }
+    
+            System.out.println("Binary representation: " + binaryRepresentation);
+            return asciiToBrailleTree.get(binaryRepresentation);
+        } catch (IOException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return "";
         }
-    }
+    }     
 
-    public void load(InputStream source) {
-        if (source == null) {
-            System.err.println("InputStream is null. Cannot load data.");
-            return;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(source))) {
+    private static BitTree buildBitTree(String fileName, int bitLength) {
+        BitTree tree = new BitTree(bitLength);
+    
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
-            int lineNumber = 0;
             while ((line = reader.readLine()) != null) {
-                lineNumber++;
-                String[] parts = line.split(",", 2); // Limit the split to 2 parts
+                String[] parts = line.split(",");
                 if (parts.length == 2) {
-                    String bits = parts[0];
+                    String brailleBits = parts[0];
                     String value = parts[1];
                     try {
-                        set(bits, value);
+                        tree.set(brailleBits, value); // Adjust the order
                     } catch (Exception e) {
-                        System.err.println("Error setting value for bits " + bits +
-                                " at line " + lineNumber + ": " + e.getMessage());
+                        System.err.println("Error setting value for bits " + brailleBits + ": " + e.getMessage());
+                        e.printStackTrace();
                     }
-                } else {
-                    System.err.println("Invalid line format at line " + lineNumber + ": " + line);
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading from InputStream: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("Error reading file: " + e.getMessage());
         }
-    }
+    
+        return tree;
+    }    
 
-    private boolean isValidBitString(String bits) {
+    private static boolean isValidBitString(String bits) {
         return bits.matches("[01]+");
     }
 
-    public static void main(String[] args) {
-        try {
-            BitTree tree = new BitTree(6);
-            tree.set("101100", "M");
-            tree.set("101110", "N");
-            tree.set("100000", "A");
-            tree.set("110000", "B");
+    public static void main(String[] args) throws Exception {
+        // Example usage
+        String brailleBits = "101100";
+        String asciiChar = toASCII(brailleBits);
+        System.out.println("Braille to ASCII: " + brailleBits + " -> " + asciiChar);
 
-            // Dump the tree before testing get method
-            PrintWriter penBefore = new PrintWriter(System.out);
-            tree.dump(penBefore);
-            penBefore.flush();
+        char unicodeChar = toUnicode(brailleBits);
+        System.out.println("Braille to Unicode: " + brailleBits + " -> " + unicodeChar);
 
-            // Test the get method
-            PrintWriter testResultsPen = new PrintWriter(System.out);
-
-            String value1 = tree.get("101100");
-            String value2 = tree.get("101110");
-            String value3 = tree.get("100000");
-
-            testResultsPen.println("Value for '101100': " + value1);
-            testResultsPen.println("Value for '101110': " + value2);
-            testResultsPen.println("Value for '100000': " + value3);
-
-            testResultsPen.flush(); // Flush the PrintWriter to ensure output is visible
-
-            // Dump the tree after testing get method
-            PrintWriter penAfter = new PrintWriter(System.out);
-            tree.dump(penAfter);
-            penAfter.flush();
-
-            // Continue with the rest of the main method...
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        char inputChar = 'W';
+        String brailleString = toBraille(inputChar);
+        System.out.println("ASCII to Braille: " + inputChar + " -> " + brailleString);
     }
 }
