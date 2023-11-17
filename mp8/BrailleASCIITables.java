@@ -20,12 +20,21 @@ public class BrailleASCIITables {
 
     public static String toASCII(String bits) throws Exception {
         try {
+            int expectedBitLength = 6; // Adjust this value based on your actual bit length
+
+            if (bits.length() != expectedBitLength || !isValidBitString(bits)) {
+                throw new IllegalArgumentException("Invalid braille bits");
+            }
+
+            System.out.println("Braille bits: " + bits);
             return brailleToAsciiTree.get(bits);
         } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
             return "";
         }
     }
+    
+    
 
     public static char toUnicode(String bits) throws Exception {
         try {
@@ -75,6 +84,10 @@ public class BrailleASCIITables {
     
         return tree;
     }    
+
+    private static boolean isValidBitString(String bits) {
+        return bits.matches("[01]+");
+    }
 
     public static void main(String[] args) throws Exception {
         // Example usage
