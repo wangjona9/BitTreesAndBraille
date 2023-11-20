@@ -22,13 +22,13 @@ public class BrailleASCIITables {
     try {
       // Read in the conversion files
       brailleToAsciiTree = new BitTree(6);
-      brailleToAsciiTree.load(new FileInputStream("brailleToASCII.txt"));
+      brailleToAsciiTree.load(new FileInputStream("BrailletoASCII.txt"));
 
       brailleToUnicodeTree = new BitTree(6);
-      brailleToUnicodeTree.load(new FileInputStream("brailleToUnicode.txt"));
+      brailleToUnicodeTree.load(new FileInputStream("BrailletoUnicode.txt"));
 
       asciiToBrailleTree = new BitTree(8);
-      asciiToBrailleTree.load(new FileInputStream("ASCIIToBraille.txt"));
+      asciiToBrailleTree.load(new FileInputStream("ASCIItoBraille.txt"));
     } catch (Exception e) {
       e.printStackTrace();
       System.err.println("Error initializing trees: " + e.getMessage());
